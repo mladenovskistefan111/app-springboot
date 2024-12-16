@@ -9,26 +9,21 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the GitHub repository for the Spring Boot app with the specified credentials
                 git credentialsId: 'github-token', url: 'https://github.com/mladenovskistefan111/app-springboot', branch: 'dev'
             }
         }
 
-        stage('Get Latest Git Tag') {
+        tage('Get Latest Git Tag') {
             steps {
                 script {
                     def latestTag = sh(script: "git describe --tags --abbrev=0", returnStdout: true).trim()
 
                     if (latestTag == '') {
-                        latestTag = 'v1.0.0'
+                        error('No tags found in the repository!')
                     }
 
-                    def (major, minor, patch) = latestTag.replace('v', '').tokenize('.')
-                    def newPatch = patch.toInteger() + 1
-                    def newTag = "v${major}.${minor}.${newPatch}"
-
-                    env.NEW_TAG = newTag
-                    echo "New Docker tag: ${newTag}"
+                    env.NEW_TAG = latestTag
+                    echo "Using Docker tag: ${latestTag}"
 
                 }
             }
@@ -37,7 +32,6 @@ pipeline {
         stage('Build Maven Project') {
             steps {
                 script {
-                    // Build the Spring Boot app using Maven
                     sh 'mvn install -DskipTests'
                 }
             }
@@ -46,17 +40,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image for the Spring Boot app
-                    sh 'docker build -t mladenovskistefan/app-springboot:latest .'
-                }
-            }
-        }
-
-        stage('Tag Image') {
-            steps {
-                script {
-                    // Tag the Docker image with the new version tag
-                    sh "docker tag mladenovskistefan/app-springboot:latest mladenovskistefan/app-springboot:${env.NEW_TAG}"
+                    sh 'docker build -t mladenovskistefan/app-springboot:${env.NEW_TAG} .'
                 }
             }
         }
@@ -65,10 +49,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-token', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        // Log in to DockerHub
                         sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
-                        // Push both the 'latest' and the new versioned tags to DockerHub
-                        sh 'docker push mladenovskistefan/app-springboot:latest'
                         sh "docker push mladenovskistefan/app-springboot:${env.NEW_TAG}"
                     }
                 }
