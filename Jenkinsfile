@@ -41,6 +41,7 @@ pipeline {
             steps {
                 script {
                     sh 'docker build -t mladenovskistefan/app-springboot:${env.NEW_TAG} .'
+                    sh "docker tag mladenovskistefan/app-springboot:${env.NEW_TAG} mladenovskistefan/app-springboot:latest"
                 }
             }
         }
@@ -50,6 +51,7 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-token', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                         sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        sh "docker push mladenovskistefan/app-springboot:${env.NEW_TAG}"
                         sh "docker push mladenovskistefan/app-springboot:${env.NEW_TAG}"
                     }
                 }
