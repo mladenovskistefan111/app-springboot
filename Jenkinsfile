@@ -40,6 +40,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    sh 'echo ${env.NEW_TAG}'
                     sh 'docker build -t mladenovskistefan/app-springboot:${env.NEW_TAG} .'
                     sh "docker tag mladenovskistefan/app-springboot:${env.NEW_TAG} mladenovskistefan/app-springboot:latest"
                 }
