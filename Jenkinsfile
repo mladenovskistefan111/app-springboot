@@ -13,7 +13,7 @@ pipeline {
             }
         }
 
-        tage('Get Latest Git Tag') {
+        stage('Get Latest Git Tag') {
             steps {
                 script {
                     def latestTag = sh(script: "git describe --tags --abbrev=0", returnStdout: true).trim()
